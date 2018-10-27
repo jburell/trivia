@@ -40,7 +40,7 @@ const PORT: &'static str = "8080";
 fn main() {
     ::std::env::set_var("RUST_LOG", "info");
     env_logger::init();
-    let sys = actix::System::new("tera-example");
+    let sys = actix::System::new("Trivia WebApp");
     let base_url = format!("{}:{}", HOSTNAME, PORT);
 
     server::new(|| {
