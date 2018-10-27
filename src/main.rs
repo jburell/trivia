@@ -50,6 +50,6 @@ fn main() {
         .unwrap()
         .start();
 
-    info!("Started http server: {}", &base_url);
+    info!("Started http server: http://{}", &base_url);
     let _ = sys.run();
 }
