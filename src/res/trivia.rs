@@ -1,6 +1,4 @@
-use actix_web::{
-    HttpResponse, Query, Result,
-};
+use actix_web::{HttpResponse, Query, Result};
 use askama::Template;
 use std::collections::HashMap;
 

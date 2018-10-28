@@ -1,10 +1,7 @@
-use ::res;
 use actix_web::{
-    http, middleware, server as actix_server, App,
-    http::Method,
-    fs,
-    middleware::cors::Cors,
+    fs, http, http::Method, middleware, middleware::cors::Cors, server as actix_server, App,
 };
+use res;
 
 pub fn start_server(base_url: &String) -> () {
     actix_server::new(|| {
@@ -13,7 +10,8 @@ pub fn start_server(base_url: &String) -> () {
             .configure(cors_config)
             .handler(
                 "/app",
-                fs::StaticFiles::new("./app/resources/public/").unwrap())
+                fs::StaticFiles::new("./app/resources/public/").unwrap(),
+            )
     }).bind(&base_url)
     .unwrap()
     .start();
@@ -28,7 +26,7 @@ fn cors_config(app: App) -> App {
         .resource("/chsk", |r| {
             r.method(Method::GET).with(res::websocket::get_from_ws);
             r.method(Method::OPTIONS).with(res::websocket::options);
-        })
-        .resource("/index", |r| r.method(http::Method::GET).with(res::trivia::index))
-        .register()
+        }).resource("/index", |r| {
+            r.method(http::Method::GET).with(res::trivia::index)
+        }).register()
 }
