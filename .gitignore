@@ -1,3 +1,7 @@
 /target
 **/*.rs.bk
 Cargo.lock
+app/resources/public/js/compiled/
+app/target/
+**/figwheel_server.log
+app/dev/
