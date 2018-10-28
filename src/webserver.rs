@@ -1,7 +1,5 @@
-use actix_web::{
-    fs, http, middleware, middleware::cors::Cors, server as actix_server, App,
-};
-use actix_web::{HttpResponse};
+use actix_web::HttpResponse;
+use actix_web::{fs, http, middleware, middleware::cors::Cors, server as actix_server, App};
 use res;
 
 pub fn start_server(base_url: &String) -> () {
@@ -32,8 +30,7 @@ fn cors_web_config(app: App) -> App {
         .max_age(3600)
         .resource("/index", |r| {
             r.method(http::Method::GET).with(res::trivia::index)
-        }).resource("/ws/", |r| r.method(http::Method::GET).f(res::websocket::ws_index))
-        .register()
+        }).resource("/ws/", |r| {
+            r.method(http::Method::GET).f(res::websocket::ws_index)
+        }).register()
 }
-
-
