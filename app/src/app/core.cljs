@@ -14,7 +14,7 @@
 
 ;; define your app data so that it doesn't get over-written on reload
 
-(def wsurl "ws://localhost:3200/ws/")
+(def wsurl "ws://localhost:8080/ws/")
 (defonce app-state (atom {:text "Trivia"}))
 
 (defn app []
@@ -39,6 +39,16 @@
 ;      (stop-router!)
 ;      (reset! router_ 
 ;        (start-connection)))
+
+;(defonce ws-socket (atom nil))
+;(defn send-msg []
+;  (ws/send (:socket @ws-socket) {:command "ping"} fmt/json))
+
+(def handlers {:on-message (fn [e] (prn (.-data e)))
+               :on-open    #(prn "Opening a new connection")
+               :on-close   #(prn "Closing a connection")})
+
+(def socket (ws/create wsurl handlers))
 
 (defn start!
       []

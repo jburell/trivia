@@ -12,4 +12,5 @@ extern crate serde_json;
 #[macro_use]
 extern crate askama;
 extern crate reqwest;
+extern crate actix;
 extern crate actix_web;
