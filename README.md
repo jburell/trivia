@@ -1,4 +1,4 @@
-# trivia
+# Trivia
 A simple trivia app made with Rust (actix-web) and Clojurescript (figwheel, sente, etc...)
 
 ## Prerequisite
