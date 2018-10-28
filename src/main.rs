@@ -42,8 +42,11 @@ fn start_server(base_url: &String) -> () {
 }
 
 fn index(query: Query<HashMap<String, String>>) -> Result<HttpResponse, Error> {
+    let fallback_name = &"world".to_string();
+    let name = query.get("name").unwrap_or(fallback_name);
+
     let s = IndexTemplate {
-        name: query.get("name").unwrap_or(&"world".to_string()),
+        name: name,
     }.render()
     .unwrap();
 
