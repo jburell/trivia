@@ -10,6 +10,7 @@ extern crate serde_json;
 
 extern crate actix_web;
 use actix_web::{
+    actix,
     http, middleware, server, App, HttpResponse, Query, Json, Result,
     http::{header, Method},
     middleware::cors::Cors,
@@ -20,23 +21,11 @@ use std::collections::HashMap;
 #[allow(unused)]
 #[macro_use]
 extern crate askama;
-#[allow(unused)]
-#[macro_use]
-extern crate log;
-#[macro_use]
-extern crate serde_derive;
-
-extern crate actix_web;
-#[allow(unused)]
-extern crate env_logger;
 extern crate reqwest;
-extern crate serde;
-extern crate serde_json;
 
-use actix_web::{actix, http, middleware, server, App, Error, HttpResponse, Query};
+//use actix_web::{actix, http, middleware, server, App, Error, HttpResponse, Query};
 use askama::Template;
 use reqwest::Client;
-use std::collections::HashMap;
 
 #[derive(Template)]
 #[template(path = "index.html")]
@@ -106,7 +95,7 @@ fn start_server(base_url: &String) -> () {
     info!("Started http server: http://{}", &base_url);
 }
 
-fn index(query: Query<HashMap<String, String>>) -> Result<HttpResponse, Error> {
+fn index(query: Query<HashMap<String, String>>) -> Result<HttpResponse> {
     let fallback_name = &"world".to_string();
     let name = query.get("name").unwrap_or(fallback_name);
 
