@@ -13,6 +13,7 @@ use actix_web::{
     actix,
     http, middleware, server, App, HttpResponse, Query, Json, Result,
     http::{header, Method},
+    fs,
     middleware::cors::Cors,
 };
 
@@ -75,8 +76,9 @@ fn main() {
 
 fn start_server(base_url: &String) -> () {
     server::new(|| {
-        App::new().middleware(middleware::Logger::default())
-             .configure(|app| {
+        App::new()
+            .middleware(middleware::Logger::default())
+            .configure(|app| {
                 Cors::for_app(app)
                     .send_wildcard()
                     .allowed_methods(vec!["GET", "POST", "OPTIONS"])
@@ -88,7 +90,9 @@ fn start_server(base_url: &String) -> () {
                     .resource("/", |r| r.method(http::Method::GET).with(index))
                     .register()
             })
-            
+            .handler(
+                "/app",
+                fs::StaticFiles::new("./app/resources/public/").unwrap())
     }).bind(&base_url)
     .unwrap()
     .start();
