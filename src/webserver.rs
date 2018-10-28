@@ -1,12 +1,10 @@
-use actix_web::{
-    fs, ws, http, http::Method, middleware, middleware::cors::Cors, server as actix_server, App,
-};
-use res;
-use std::time::{Instant, Duration};
 use actix::prelude::*;
 use actix_web::{
-    Error, HttpRequest, HttpResponse,
+    fs, http, http::Method, middleware, middleware::cors::Cors, server as actix_server, ws, App,
 };
+use actix_web::{Error, HttpRequest, HttpResponse};
+use res;
+use std::time::{Duration, Instant};
 
 pub fn start_server(base_url: &String) -> () {
     actix_server::new(|| {
@@ -30,8 +28,7 @@ fn cors_web_config(app: App) -> App {
         .max_age(3600)
         .resource("/index", |r| {
             r.method(http::Method::GET).with(res::trivia::index)
-        })
-        .resource("/ws/", |r| r.method(http::Method::GET).f(ws_index))
+        }).resource("/ws/", |r| r.method(http::Method::GET).f(ws_index))
         .register()
 }
 
@@ -74,13 +71,11 @@ impl StreamHandler<ws::Message, ws::ProtocolError> for MyWebSocket {
             }
             ws::Message::Pong(_) => {
                 self.hb = Instant::now();
-                ctx.text("Hello!".to_owned());
+                //ctx.text("pong".to_owned());
             }
             ws::Message::Text(text) => ctx.text(text),
             ws::Message::Binary(bin) => ctx.binary(bin),
-            ws::Message::Close(_) => {
-                ctx.stop();
-            }
+            ws::Message::Close(_) => ctx.stop(),
         }
     }
 }
@@ -107,6 +102,7 @@ impl MyWebSocket {
                 return;
             }
 
+            println!("WS pinging");
             ctx.ping("ping");
         });
     }

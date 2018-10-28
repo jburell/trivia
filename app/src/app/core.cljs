@@ -15,15 +15,15 @@
 ;; define your app data so that it doesn't get over-written on reload
 
 (def wsurl "ws://localhost:8080/ws/")
+
 (defonce app-state (atom {:text "Trivia"}))
+(defonce ws-socket (atom nil))
 
-(defn app []
-  [:div.center
-    [:h1 (:text @app-state)]
-    [:h3.question-marker "Q: " [:span.question "What is...?"]]])
+(defn send-msg [] (ws/send @ws-socket {:command "ping"} fmt/json))
 
-(reagent/render-component [app]
-                          (. js/document (getElementById "app")))
+(def handlers {:on-message (fn [e] (prn (.-data e)))
+               :on-open    #(prn "Opening a new connection")
+               :on-close   #(prn "Closing a connection")})
 
 ;(defn start-connection []
 ;  (go
@@ -33,35 +33,27 @@
 ;      (is (= :open (ws/status socket)))
 ;      (done))))
 
-;(defonce router_ (atom nil))
-;(defn stop-router! [] (when-let [stop-f @router_] (stop-f)))
-;(defn start-router! []
-;      (stop-router!)
-;      (reset! router_ 
-;        (start-connection)))
+; (def ws-socket (ws/create wsurl handlers))
 
-;(defonce ws-socket (atom nil))
-;(defn send-msg []
-;  (ws/send (:socket @ws-socket) {:command "ping"} fmt/json))
+(defn app []
+  [:div.center
+    [:h1 (:text @app-state)]
+    [:h3.question-marker "Q: " [:span.question "What is...?"]]
+    [:input {:type "button" :value "Click me!"
+            :on-click #(send-msg)}]])
 
-(def handlers {:on-message (fn [e] (prn (.-data e)))
-               :on-open    #(prn "Opening a new connection")
-               :on-close   #(prn "Closing a connection")})
-
-(def socket (ws/create wsurl handlers))
-
-(defn start!
-      []
-;      (start-router!)
-      (reagent/render-component [app]
-        (.getElementById js/document "app")))
-
-;(defn ^:export run []
-;  (reagent/render [app]
-;            (js/document.getElementById "app")))        
+(reset! ws-socket (ws/create wsurl handlers))
+(reagent/render-component [app]
+                          (. js/document (getElementById "app")))
 
 (defn on-js-reload []
-  ;; optionally touch your app-state to force rerendering depending on
-  ;; your application
-  ;; (swap! app-state update-in [:__figwheel_counter] inc)
+  (do
+    ;; optionally touch your app-state to force rerendering depending on
+    ;; your application
+    ;; (swap! app-state update-in [:__figwheel_counter] inc)
+    (println "reloaded...")
+    ;(ws/send (:socket @ws-socket) {:command "ping"} fmt/json)
+    ; (ws/send (:socket @ws-socket) {:command "close"})
+    )
 )
+
