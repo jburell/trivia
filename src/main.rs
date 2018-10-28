@@ -23,12 +23,8 @@ const PORT: &'static str = "8080";
 fn main() {
     ::std::env::set_var("RUST_LOG", "info");
     env_logger::init();
-<<<<<<< d02c256c91c1e290813edf2a2e22fb249c8f280c
-    let sys = actix::System::new("Trivia WebApp");
-=======
 
     let sys = actix::System::new("tera-example");
->>>>>>> Re-group things
     let base_url = format!("{}:{}", HOSTNAME, PORT);
     start_server(&base_url);
     let _ = sys.run();
@@ -43,9 +39,6 @@ fn start_server(base_url: &String) -> () {
     .unwrap()
     .start();
     info!("Started http server: http://{}", &base_url);
-<<<<<<< d02c256c91c1e290813edf2a2e22fb249c8f280c
-    let _ = sys.run();
-=======
 }
 
 fn index(query: Query<HashMap<String, String>>) -> Result<HttpResponse, Error> {
@@ -55,5 +48,4 @@ fn index(query: Query<HashMap<String, String>>) -> Result<HttpResponse, Error> {
     .unwrap();
 
     Ok(HttpResponse::Ok().content_type("text/html").body(s))
->>>>>>> Re-group things
 }
