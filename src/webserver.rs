@@ -4,6 +4,7 @@ use actix_web::{
 };
 use actix_web::{Error, HttpRequest, HttpResponse};
 use res;
+use serde_json::Error as SerdeError;
 use std::time::{Duration, Instant};
 
 pub fn start_server(base_url: &String) -> () {
@@ -42,6 +43,12 @@ fn ws_index(r: &HttpRequest) -> Result<HttpResponse, Error> {
     ws::start(r, MyWebSocket::new())
 }
 
+// TODO: consider doing some clever enum stuff here...
+#[derive(Deserialize, Debug)]
+struct TriviaDing {
+    team_token: String,
+}
+
 /// websocket connection is long running connection, it easier
 /// to handle with an actor
 struct MyWebSocket {
@@ -63,17 +70,23 @@ impl Actor for MyWebSocket {
 impl StreamHandler<ws::Message, ws::ProtocolError> for MyWebSocket {
     fn handle(&mut self, msg: ws::Message, ctx: &mut Self::Context) {
         // process websocket messages
-        println!("WS: {:?}", msg);
+        println!("ws: {:?}", msg);
         match msg {
             ws::Message::Ping(msg) => {
                 self.hb = Instant::now();
                 ctx.pong(&msg);
             }
-            ws::Message::Pong(_) => {
-                self.hb = Instant::now();
-                //ctx.text("pong".to_owned());
+            ws::Message::Pong(_) => self.hb = Instant::now(),
+            ws::Message::Text(text) => {
+                let r: Result<TriviaDing, SerdeError> = serde_json::from_str(&text);
+                match r {
+                    Ok(_ding) => ctx.text("u dinged"),
+                    Err(e) => {
+                        println!("  {:?}", e);
+                        ctx.text("u failed")
+                    }
+                };
             }
-            ws::Message::Text(text) => ctx.text(text),
             ws::Message::Binary(bin) => ctx.binary(bin),
             ws::Message::Close(_) => ctx.stop(),
         }
@@ -90,19 +103,13 @@ impl MyWebSocket {
     /// also this method checks heartbeats from client
     fn hb(&self, ctx: &mut <Self as Actor>::Context) {
         ctx.run_interval(HEARTBEAT_INTERVAL, |act, ctx| {
-            // check client heartbeats
             if Instant::now().duration_since(act.hb) > CLIENT_TIMEOUT {
-                // heartbeat timed out
                 println!("Websocket Client heartbeat failed, disconnecting!");
-
-                // stop actor
                 ctx.stop();
-
-                // don't try to send a ping
                 return;
             }
 
-            println!("WS pinging");
+            println!("ws pinging");
             ctx.ping("ping");
         });
     }

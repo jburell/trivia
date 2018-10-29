@@ -19,7 +19,8 @@
 (defonce app-state (atom {:text "Trivia"}))
 (defonce ws-socket (atom nil))
 
-(defn send-msg [] (ws/send @ws-socket {:command "ping"} fmt/json))
+;; TODO: factor out message as param
+(defn send-msg [] (ws/send @ws-socket {"team_token" "ping"} fmt/json))
 
 (def handlers {:on-message (fn [e] (prn (.-data e)))
                :on-open    #(prn "Opening a new connection")
@@ -48,12 +49,8 @@
 
 (defn on-js-reload []
   (do
-    ;; optionally touch your app-state to force rerendering depending on
-    ;; your application
-    ;; (swap! app-state update-in [:__figwheel_counter] inc)
     (println "reloaded...")
-    ;(ws/send (:socket @ws-socket) {:command "ping"} fmt/json)
-    ; (ws/send (:socket @ws-socket) {:command "close"})
+    ;; TODO: close previous websocket (or just open it once...)
     )
 )
 
