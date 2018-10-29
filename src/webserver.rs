@@ -80,7 +80,10 @@ impl StreamHandler<ws::Message, ws::ProtocolError> for MyWebSocket {
             ws::Message::Text(text) => {
                 let r: Result<TriviaDing, SerdeError> = serde_json::from_str(&text);
                 match r {
-                    Ok(_ding) => ctx.text("u dinged"),
+                    Ok(ding) => {
+                        println!("  team_token: {:?}", ding.team_token);
+                        ctx.text("u dinged")
+                    }
                     Err(e) => {
                         println!("  {:?}", e);
                         ctx.text("u failed")

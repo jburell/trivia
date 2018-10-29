@@ -20,7 +20,7 @@
 (defonce ws-socket (atom nil))
 
 ;; TODO: factor out message as param
-(defn send-msg [] (ws/send @ws-socket {"team_token" "ping"} fmt/json))
+(defn send-msg [] (ws/send @ws-socket {"team_token" "team1"} fmt/json))
 
 (def handlers {:on-message (fn [e] (prn (.-data e)))
                :on-open    #(prn "Opening a new connection")
