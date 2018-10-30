@@ -1,6 +1,7 @@
 use actix_web::{HttpResponse, Query, Result};
 use askama::Template;
 use std::collections::HashMap;
+use reqwest;
 
 #[derive(Template)]
 #[template(path = "index.html")]
