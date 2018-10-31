@@ -14,7 +14,7 @@
 
 ;; define your app data so that it doesn't get over-written on reload
 
-(def wsurl "ws://localhost:8080/ws/")
+(def wsurl "ws://localhost:8081/ws/")
 (defonce app-state (atom {:text "Trivia"}))
 
 (defn app []
@@ -37,7 +37,7 @@
 ;(defn stop-router! [] (when-let [stop-f @router_] (stop-f)))
 ;(defn start-router! []
 ;      (stop-router!)
-;      (reset! router_ 
+;      (reset! router_
 ;        (start-connection)))
 
 ;(defonce ws-socket (atom nil))
@@ -58,7 +58,7 @@
 
 ;(defn ^:export run []
 ;  (reagent/render [app]
-;            (js/document.getElementById "app")))        
+;            (js/document.getElementById "app")))
 
 (defn on-js-reload []
   ;; optionally touch your app-state to force rerendering depending on

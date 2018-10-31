@@ -1,40 +1,42 @@
 include!("externs.rs");
-use actix_web::actix as actix_server;
 
 mod config;
+mod relay;
 mod res;
 mod webserver;
-mod relay;
 
-use std::sync::{ Mutex, Arc };
+use actix_web::{
+    fs, http, http::{StatusCode}, middleware, middleware::cors::Cors, server as actix_web_server, App, Body,
+    HttpRequest, HttpResponse, Result as AResult
+};
+
 use relay::Relay;
-use webserver::WsServer;
 use std::sync::mpsc;
 use std::sync::mpsc::Receiver;
+use std::sync::{Arc, Mutex};
 
 extern crate ws;
 
-use ws::{listen, Handler, Sender, Result, Message, CloseCode, Handshake};
+use ws::{listen, CloseCode, Handler, Handshake, Message, Result as WsResult, Sender};
 
 struct Server {
     out: Sender,
 }
 
 impl Server {
-    pub fn send(&mut self, msg: String) -> Result<()> {
+    pub fn send(&mut self, msg: String) -> WsResult<()> {
         self.out.send(msg)
     }
 }
 
 impl Handler for Server {
-
-    fn on_open(&mut self, _: Handshake) -> Result<()> {
+    fn on_open(&mut self, _: Handshake) -> WsResult<()> {
         // Now we don't need to call unwrap since `on_open` returns a `Result<()>`.
         // If this call fails, it will only result in this connection disconnecting.
         self.send("Hello WebSocket".to_owned())
     }
 
-    fn on_message(&mut self, msg: Message) -> Result<()> {
+    fn on_message(&mut self, msg: Message) -> WsResult<()> {
         // Echo the message back
         self.out.send(msg)
     }
@@ -47,7 +49,7 @@ impl Handler for Server {
         // but let's assume that we know that `reason` is human-readable.
         match code {
             CloseCode::Normal => println!("The client is done with the connection."),
-            CloseCode::Away   => println!("The client is leaving the site."),
+            CloseCode::Away => println!("The client is leaving the site."),
             _ => println!("The client encountered an error: {}", reason),
         }
     }
@@ -57,15 +59,35 @@ fn main() {
     ::std::env::set_var("RUST_LOG", "info");
     env_logger::init();
 
-    /*let relay_actor = Arc::new(Mutex::new(Relay::new()));
+    // TODO: starta server-tråd för att ta emot HTTP POST
+    std::thread::spawn(move || listen("127.0.0.1:8081", |out| Server { out: out }).unwrap());
 
-    let sys = actix_server::System::new("Trivia Application");
-    let server = WsServer::new(relay_actor.clone());
-    server.start_server(&config::get_base_url());
-    let _ = sys.run();*/
+    let sys = actix_web::actix::System::new("Trivia Application");
+    start_server(&config::get_base_url());
+    let _ = sys.run();
 
+}
 
-    listen("127.0.0.1:8080", |out| {
-        Server { out: out }         
-    }).unwrap()
+pub fn start_server(base_url: &String) -> () {
+    actix_web_server::new(|| {
+        App::new()
+            .middleware(middleware::Logger::default())
+            .handler(
+                "/app",
+                fs::StaticFiles::new("./app/resources/public/").unwrap(),
+            ).resource("/", |r| {
+                r.method(http::Method::GET).f(|_| {
+                    HttpResponse::Found()
+                        .header("LOCATION", "/app/index.html")
+                        .finish()
+                })
+            }).resource("/api/guess", |r| r.method(http::Method::POST).f(guess))
+    }).bind(&base_url)
+    .unwrap()
+    .start();
+    info!("Started http server: http://{}", &base_url);
+}
+
+pub fn guess(r: &HttpRequest) -> AResult<HttpResponse> {
+    Ok(HttpResponse::with_body(StatusCode::OK, Body::Empty))
 }
