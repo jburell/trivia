@@ -1,25 +1,28 @@
+use actix::prelude::*;
 use actix_web::HttpResponse;
-use actix_web::{ws, fs, http, middleware, middleware::cors::Cors, server as actix_server, App};
+use actix_web::{ws::WsWriter, ws, fs, http, middleware, middleware::cors::Cors, server as actix_server, App};
 use res;
 use relay::Relay;
+use ::res::websocket::MyWebSocket;
+use std::sync::{ Mutex, Arc };
 
-pub fn start_server(base_url: &String, relay: Relay) -> () {
-    actix_server::new(|| {
-        App::new()
-            .middleware(middleware::Logger::default())
-            .configure(/*cors_web_config*/
-                |app| {
-                    Cors::for_app(app)
-                        .send_wildcard()
-                        .allowed_methods(vec!["GET", "POST", "OPTIONS"])
-                        .max_age(3600)
-                        .resource("/index", |r| {
-                            r.method(http::Method::GET).with(res::trivia::index)
-                        }).resource("/ws/", |r| {
-                            r.method(http::Method::GET).f(ws::start(r, relay)/*res::websocket::ws_index*/)
-                        }).register()
-                }
-            )
+pub struct WsServer {
+    relay: Arc<Mutex<Relay>>,
+}
+/*
+static application: App = App::new();
+            
+
+impl WsServer {
+    pub fn new(relay: Arc<Mutex<Relay>>) -> WsServer {
+        WsServer {relay: relay }
+    }
+
+    pub fn start_server(&self, base_url: &String) -> () {
+        // Couple RelayActor and WsActor
+        //let relay_clone = relay.clone();
+        application.middleware(middleware::Logger::default())
+            .configure(|a| self.cors_web_config(a))
             .handler(
                 "/app",
                 fs::StaticFiles::new("./app/resources/public/").unwrap(),
@@ -29,21 +32,31 @@ pub fn start_server(base_url: &String, relay: Relay) -> () {
                         .header("LOCATION", "/app/index.html")
                         .finish()
                 })
-            })
-    }).bind(&base_url)
-    .unwrap()
-    .start();
-    info!("Started http server: http://{}", &base_url);
-}
+            }); 
 
-fn cors_web_config(app: App) -> App {
-    Cors::for_app(app)
-        .send_wildcard()
-        .allowed_methods(vec!["GET", "POST", "OPTIONS"])
-        .max_age(3600)
-        .resource("/index", |r| {
-            r.method(http::Method::GET).with(res::trivia::index)
-        }).resource("/ws/", |r| {
-            r.method(http::Method::GET).f(ws::start(r, relay)/*res::websocket::ws_index*/)
-        }).register()
-}
+        actix_server::new(|| application).bind(&base_url)
+            .unwrap()
+            .start();
+        info!("Started http server: http://{}", &base_url);
+    }
+
+    fn cors_web_config(&self, app: App) -> App {
+        let relay_clone = self.relay.clone();
+        Cors::for_app(app)
+            .send_wildcard()
+            .allowed_methods(vec!["GET", "POST", "OPTIONS"])
+            .max_age(3600)
+            .resource("/index", |r| {
+                r.method(http::Method::GET).with(res::trivia::index)
+            }).resource("/ws/", |r| {
+                r.method(http::Method::GET).f(|r| {
+                        let socket_actor = MyWebSocket::new(relay_clone);   
+                        //socket_actor.send_text("Hello");
+                        //let addr = actix::Actor::create(|ctx| socket_actor);
+                        //println!("Socket actor addr: {:?}", addr);
+                        //relay.set_reciever_addr(addr);
+                        ws::start(r, socket_actor)
+                })
+            }).register()
+    }
+}*/

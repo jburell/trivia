@@ -1,6 +1,10 @@
 use actix::prelude::*;
-use actix_web::{ws, Error, HttpRequest, HttpResponse};
+use actix_web::{ws::WsWriter, ws, Error, HttpRequest, HttpResponse};
 use std::time::{Duration, Instant};
+use relay::Relay;
+use std::cell::RefCell;
+use std::sync::{ Mutex, Arc };
+
 
 /// How often heartbeat pings are sent
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
@@ -8,16 +12,21 @@ const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 
 /// do websocket handshake and start `MyWebSocket` actor
-pub fn ws_index(r: &HttpRequest) -> Result<HttpResponse, Error> {
-    ws::start(r, MyWebSocket::new())
-}
+/*pub fn ws_index(r: &HttpRequest) -> Result<HttpResponse, Error> {
+    let socket_actor = MyWebSocket::new();
+    //let addr = socket_actor.create();
+    //println!("Socket actor addr: {:?}", addr);
+    ws::start(r, socket_actor)
+}*/
 
 /// websocket connection is long running connection, it easier
 /// to handle with an actor
-struct MyWebSocket {
+//#[derive(Debug)]
+pub struct MyWebSocket {
     /// Client must send ping at least once per 10 seconds (CLIENT_TIMEOUT),
     /// otherwise we drop connection.
     hb: Instant,
+    relay: Arc<Mutex<Relay>>,
 }
 
 impl Actor for MyWebSocket {
@@ -26,6 +35,10 @@ impl Actor for MyWebSocket {
     /// Method is called on actor start. We start the heartbeat process here.
     fn started(&mut self, ctx: &mut Self::Context) {
         self.hb(ctx);
+        ctx.send_text("text");
+        let addr = ctx.address();
+        let mut relay_lock = (*self.relay).lock().unwrap();
+        relay_lock.set_reciever_addr(addr);
     }
 }
 
@@ -53,8 +66,8 @@ impl StreamHandler<ws::Message, ws::ProtocolError> for MyWebSocket {
 }
 
 impl MyWebSocket {
-    fn new() -> Self {
-        Self { hb: Instant::now() }
+    pub fn new(relay: Arc<Mutex<Relay>>) -> Self {
+        Self { hb: Instant::now(), relay: relay, }
     }
 
     /// helper method that sends ping to client every second.
