@@ -6,8 +6,8 @@ mod res;
 mod webserver;
 
 use actix_web::{
-    fs, http, http::{StatusCode}, middleware, middleware::cors::Cors, server as actix_web_server, App, Body,
-    HttpRequest, HttpResponse, Result as AResult
+    fs, http, http::StatusCode, middleware, middleware::cors::Cors, server as actix_web_server,
+    App, Body, HttpMessage, HttpRequest, HttpResponse, Result as AResult,
 };
 
 use relay::Relay;
@@ -15,6 +15,14 @@ use std::sync::mpsc;
 use std::sync::mpsc::Receiver;
 use std::sync::{Arc, Mutex};
 
+use actix_web::{
+    AsyncResponder, FutureResponse,
+};
+use bytes::Bytes;
+use futures::future::Future;
+
+extern crate bytes;
+extern crate futures;
 extern crate ws;
 
 use ws::{listen, CloseCode, Handler, Handshake, Message, Result as WsResult, Sender};
@@ -65,7 +73,6 @@ fn main() {
     let sys = actix_web::actix::System::new("Trivia Application");
     start_server(&config::get_base_url());
     let _ = sys.run();
-
 }
 
 pub fn start_server(base_url: &String) -> () {
@@ -88,6 +95,13 @@ pub fn start_server(base_url: &String) -> () {
     info!("Started http server: http://{}", &base_url);
 }
 
-pub fn guess(r: &HttpRequest) -> AResult<HttpResponse> {
-    Ok(HttpResponse::with_body(StatusCode::OK, Body::Empty))
+pub fn guess(r: &HttpRequest) -> FutureResponse<HttpResponse> {
+    r.body() // <- get Body future
+        .limit(1024) // <- change max size of the body to a 1kb
+        .from_err()
+        .and_then(|bytes: Bytes| {
+            // <- complete body
+            println!("==== BODY ==== {:?}", bytes);
+            Ok(HttpResponse::Ok().into())
+        }).responder()
 }
