@@ -14,16 +14,9 @@
 
 ;; define your app data so that it doesn't get over-written on reload
 
-(def wsurl "ws://localhost:8081/ws/")
+(def wsurl "ws://localhost:8081/")
 (defonce app-state (atom {:text "Trivia"}))
 
-(defn app []
-  [:div.center
-    [:h1 (:text @app-state)]
-    [:h3.question-marker "Q: " [:span.question "What is...?"]]])
-
-(reagent/render-component [app]
-                          (. js/document (getElementById "app")))
 
 ;(defn start-connection []
 ;  (go
@@ -41,8 +34,6 @@
 ;        (start-connection)))
 
 ;(defonce ws-socket (atom nil))
-;(defn send-msg []
-;  (ws/send (:socket @ws-socket) {:command "ping"} fmt/json))
 
 (def handlers {:on-message (fn [e] (prn (.-data e)))
                :on-open    #(prn "Opening a new connection")
@@ -50,11 +41,14 @@
 
 (def socket (ws/create wsurl handlers))
 
-(defn start!
-      []
-;      (start-router!)
-      (reagent/render-component [app]
-        (.getElementById js/document "app")))
+(defn send-msg []
+ (ws/send socket {:user "Tomten" :message "some data" } fmt/json))
+
+; (defn start!
+;       []
+; ;      (start-router!)
+;       (reagent/render-component [app]
+;         (.getElementById js/document "app")))
 
 ;(defn ^:export run []
 ;  (reagent/render [app]
@@ -65,3 +59,13 @@
   ;; your application
   ;; (swap! app-state update-in [:__figwheel_counter] inc)
 )
+
+(defn app []
+  [:div.center
+    [:h1 (:text @app-state)]
+    [:h3.question-marker "Q: " [:span.question "What is...?"]]]
+    [:input {:type "button" :value "Click me!"
+            :on-click #(send-msg)}])
+
+(reagent/render-component [app]
+                          (. js/document (getElementById "app")))

@@ -27,6 +27,19 @@ extern crate ws;
 
 use ws::{listen, CloseCode, Handler, Handshake, Message, Result as WsResult, Sender};
 
+#[derive(Deserialize, Debug)]
+struct ClientChatMessage {
+    user: String,
+    message: String,
+}
+
+#[derive(Serialize, Debug)]
+struct ServerChatMessage {
+    user: String,
+    message: String,
+    timestamp: String,
+}
+
 struct Server {
     out: Sender,
 }
@@ -46,7 +59,23 @@ impl Handler for Server {
 
     fn on_message(&mut self, msg: Message) -> WsResult<()> {
         // Echo the message back
-        self.out.send(msg)
+        info!("{}", msg);
+
+        if let Ok(msg) = serde_json::from_str::<ClientChatMessage>(msg.as_text().unwrap()) {
+            let server_msg = ServerChatMessage {
+                timestamp: "hejsan".to_owned(),
+                user: msg.user,
+                message: msg.message,
+            };
+            if let Ok(server_msg) = serde_json::to_string(&server_msg) {
+                self.out.send(server_msg)
+            } else {
+                self.out.send("bork")
+            }
+        } else {
+            self.out.send("bork")
+
+        }
     }
 
     fn on_close(&mut self, code: CloseCode, reason: &str) {
